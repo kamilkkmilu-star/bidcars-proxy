@@ -16,12 +16,13 @@ app.get("/bidcars", async (req, res) => {
   try {
     browser = await chromium.launch({
       headless: true,
+      executablePath: chromium.executablePath(),
       args: ["--no-sandbox", "--disable-setuid-sandbox"]
     });
 
     const page = await browser.newPage({
       userAgent:
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36"
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"
     });
 
     await page.goto(url, {
@@ -29,28 +30,21 @@ app.get("/bidcars", async (req, res) => {
       timeout: 60000
     });
 
-    // czekamy aż BID.CARS faktycznie załaduje dane pojazdu
-    await page.waitForSelector("text=VIN", {
-      timeout: 30000
-    });
+    // czekamy aż BID.CARS załaduje dane
+    await page.waitForSelector("text=VIN", { timeout: 15000 });
 
     const html = await page.content();
-
     res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.status(200).send(html);
+    res.send(html);
 
   } catch (err) {
-    res.status(500).json({
-      error: err.toString()
-    });
+    res.status(500).json({ error: err.toString() });
   } finally {
-    if (browser) {
-      await browser.close();
-    }
+    if (browser) await browser.close();
   }
 });
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log("Server running on port", PORT);
 });
