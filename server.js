@@ -12,11 +12,9 @@ app.get("/bidcars", async (req, res) => {
   }
 
   let browser;
-
   try {
     browser = await chromium.launch({
       headless: true,
-      executablePath: chromium.executablePath(),
       args: ["--no-sandbox", "--disable-setuid-sandbox"]
     });
 
@@ -25,20 +23,24 @@ app.get("/bidcars", async (req, res) => {
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"
     });
 
+    // 👉 wchodzimy na stronę
     await page.goto(url, {
       waitUntil: "networkidle",
-      timeout: 60000
+      timeout: 30000
     });
 
-    // czekamy aż BID.CARS załaduje dane
-    await page.waitForSelector("text=VIN", { timeout: 15000 });
+    // 👉 DAJEMY STRONIE CZAS NA JS
+    await page.waitForTimeout(5000);
 
+    // 👉 bierzemy CAŁY HTML
     const html = await page.content();
+
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.send(html);
-
   } catch (err) {
-    res.status(500).json({ error: err.toString() });
+    res.status(500).json({
+      error: err.toString()
+    });
   } finally {
     if (browser) await browser.close();
   }
